@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midhills — Integrated Product Costing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f4f0;--surface:#ffffff;--surface2:#f0ede8;--border:#e2dfd8;--border2:#ccc8be;
+  --text:#181816;--text2:#68675f;--text3:#9c9a92;
+  --green:#1b3d2a;--green2:#2a6647;--green-light:#e6f0eb;--green-mid:#b8d4c4;
+  --profit-c:#1a5c35;--profit-bg:#e8f4ec;--loss-c:#8b1f1f;--loss-bg:#faeaea;
+  --warn-c:#7a4800;--warn-bg:#fef3e2;--info-bg:#e8f0fb;--info-c:#1a3a7a;
+  --mono:'DM Mono',monospace;--sans:'DM Sans',sans-serif;
+  --r:8px;--rl:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;display:flex;flex-direction:column}
+.topbar{height:52px;background:var(--green);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;z-index:10}
+.t-logo{font-family:var(--mono);font-size:12px;font-weight:500;color:#fff;letter-spacing:.1em;text-transform:uppercase}
+.t-div{width:1px;height:18px;background:rgba(255,255,255,.2)}
+.t-sub{font-size:12px;color:rgba(255,255,255,.5);font-weight:300}
+.t-fx{margin-left:auto;font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.65);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);padding:3px 10px;border-radius:5px;display:flex;align-items:center;gap:6px}
+.t-fx-live{color:#6de8a0;font-weight:500}
+.t-fx-dot{width:6px;height:6px;border-radius:50%;background:#6de8a0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.body{display:flex;flex:1;overflow:hidden}
+.sidebar{width:210px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto}
+.nav-grp{padding:14px 0 4px}
+.nav-grp-lbl{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);padding:0 18px 6px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 18px;cursor:pointer;font-size:13px;color:var(--text2);border-left:2px solid transparent;transition:all .12s;user-select:none;white-space:nowrap}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--green-light);color:var(--green);border-left-color:var(--green2);font-weight:500}
+.nav-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);flex-shrink:0;transition:background .12s}
+.nav-item.active .nav-dot{background:var(--green2)}
+.nav-badge{margin-left:auto;font-family:var(--mono);font-size:10px;padding:1px 6px;border-radius:10px;background:var(--surface2);color:var(--text3)}
+.nav-item.active .nav-badge{background:var(--green);color:#fff}
+.main{flex:1;overflow-y:auto;padding:24px 28px;background:var(--bg)}
+.panel{display:none}
+.panel.active{display:block}
+.panel-title{font-size:19px;font-weight:500;margin-bottom:3px}
+.panel-sub{font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:20px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px;margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px}
+.card .lbl{font-size:10px;color:var(--text3);font-family:var(--mono);margin-bottom:5px;letter-spacing:.02em}
+.card .val{font-size:20px;font-weight:500;line-height:1;font-family:var(--mono)}
+.card .sub{font-size:10px;color:var(--text3);margin-top:4px}
+.card.p{border-color:var(--green-mid);background:var(--profit-bg)}.card.p .val{color:var(--profit-c)}
+.card.l{border-color:#f0bebe;background:var(--loss-bg)}.card.l .val{color:var(--loss-c)}
+.card.i{border-color:#b8cef0;background:var(--info-bg)}.card.i .val{color:var(--info-c)}
+.sec{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);margin-bottom:14px;overflow:hidden}
+.sec-head{padding:10px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text2);font-family:var(--mono)}
+.igrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;background:var(--border)}
+.field{background:var(--surface);padding:10px 14px;display:flex;flex-direction:column;gap:4px}
+.field label{font-size:10px;color:var(--text3);font-family:var(--mono);letter-spacing:.02em}
+.field-r{display:flex;align-items:center;gap:6px}
+.field input,.field select{flex:1;height:28px;padding:0 7px;border:1px solid var(--border);border-radius:5px;font-size:13px;font-family:var(--mono);font-weight:500;color:var(--text);background:var(--bg);transition:border-color .1s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--green2);background:var(--surface);box-shadow:0 0 0 2px var(--green-light)}
+.field .unit{font-size:10px;color:var(--text3);white-space:nowrap;font-family:var(--mono)}
+.tscroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 14px;font-size:10px;font-weight:500;letter-spacing:.07em;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border);font-family:var(--mono)}
+td{padding:8px 14px;border-bottom:1px solid var(--border);color:var(--text)}
+tr:last-child td{border-bottom:none}
+.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+tr.tot td{font-weight:500;background:var(--surface2);font-family:var(--mono)}
+tr.pr td{color:var(--profit-c);font-weight:500;font-family:var(--mono)}
+tr.ls td{color:var(--loss-c);font-weight:500;font-family:var(--mono)}
+tr.hi td{background:var(--warn-bg);color:var(--warn-c);font-family:var(--mono)}
+@media(max-width:680px){
+  html,body{height:auto;overflow:auto}
+  .body{flex-direction:column}
+  .sidebar{width:100%;flex-direction:row;flex-wrap:nowrap;overflow-x:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .nav-grp{padding:6px 4px;display:flex}
+  .nav-grp-lbl{display:none}
+  .nav-item{padding:6px 10px;border-left:none;border-radius:6px;border-bottom:2px solid transparent;font-size:12px}
+  .nav-item.active{border-left-color:transparent;border-bottom-color:var(--green2)}
+  .main{padding:14px}
+  .cards{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span class="t-logo">Midhills</span>
+  <span class="t-div"></span>
+  <span class="t-sub">Integrated product costing · Steps 1–4</span>
+  <div class="t-fx"><span class="t-fx-dot"></span>₹/USD &nbsp;<span class="t-fx-live" id="fx_disp">91.00</span></div>
+</div>
+<div class="body">
+  <nav class="sidebar">
+    <div class="nav-grp">
+      <div class="nav-grp-lbl">Inputs</div>
+      <div class="nav-item active" onclick="go('inputs',this)"><span class="nav-dot"></span>All inputs<span class="nav-badge">A–E</span></div>
+    </div>
+    <div class="nav-grp">
+      <div class="nav-grp-lbl">Steps</div>
+      <div class="nav-item" onclick="go('s1',this)"><span class="nav-dot"></span>Rosin<span class="nav-badge">01</span></div>
+      <div class="nav-item" onclick="go('s2',this)"><span class="nav-dot"></span>Ester gum<span class="nav-badge">02</span></div>
+      <div class="nav-item" onclick="go('s3',this)"><span class="nav-dot"></span>GTO fractionation<span class="nav-badge">03</span></div>
+      <div class="nav-item" onclick="go('s4',this)"><span class="nav-dot"></span>Pine oil<span class="nav-badge">04</span></div>
+    </div>
+  </nav>
+  <main class="main">
+
+    <!-- INPUTS -->
+    <div id="p-inputs" class="panel active">
+      <div class="panel-title">Inputs</div>
+      <div class="panel-sub">Change any value — all steps recalculate instantly</div>
+      <div class="sec"><div class="sec-head">A · OPR input costs</div><div class="igrid">
+        <div class="field"><label>OPR purchase price</label><div class="field-r"><input type="number" id="opr_p" value="105" step="0.5"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Labour cost</label><div class="field-r"><input type="number" id="opr_lab" value="3.5" step="0.5"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Inward freight</label><div class="field-r"><input type="number" id="opr_fr" value="1" step="0.5"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Rosin yield</label><div class="field-r"><input type="number" id="r_yld" value="0.72" step="0.01"><span class="unit">fraction of OPR</span></div></div>
+        <div class="field"><label>GTO yield</label><div class="field-r"><input type="number" id="g_yld" value="0.18" step="0.01"><span class="unit">fraction of OPR</span></div></div>
+        <div class="field"><label>GTO selling price</label><div class="field-r"><input type="number" id="gto_sp" value="135" step="1"><span class="unit">₹/kg</span></div></div>
+      </div></div>
+      <div class="sec"><div class="sec-head">B · Rosin selling &amp; delivery</div><div class="igrid">
+        <div class="field"><label>Rosin selling price</label><div class="field-r"><input type="number" id="ros_sell" value="120" step="1"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Packing charges</label><div class="field-r"><input type="number" id="ros_pack" value="1" step="0.5"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Outward transport</label><div class="field-r"><input type="number" id="ros_trans" value="0" step="0.5"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Truck load</label><div class="field-r"><input type="number" id="truck" value="12000" step="500"><span class="unit">kg</span></div></div>
+      </div></div>
+      <div class="sec"><div class="sec-head">C · Ester gum</div><div class="igrid">
+        <div class="field"><label>Rosin source</label><div class="field-r"><select id="ros_src"><option value="OWN">OWN (Step 1)</option><option value="MARKET">MARKET</option></select></div></div>
+        <div class="field"><label>Rosin market price</label><div class="field-r"><input type="number" id="ros_mkt" value="115" step="1"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>EG selling price</label><div class="field-r"><input type="number" id="eg_sell" value="138" step="1"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Glycerol cost</label><div class="field-r"><input type="number" id="gly_cost" value="154" step="1"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Glycerol ratio</label><div class="field-r"><input type="number" id="gly_ratio" value="0.15" step="0.01"><span class="unit">fraction of rosin</span></div></div>
+        <div class="field"><label>Rosin oil sell price</label><div class="field-r"><input type="number" id="roil_sp" value="70" step="1"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Ester gum yield</label><div class="field-r"><input type="number" id="eg_yld" value="0.896" step="0.001"><span class="unit">fraction of total input</span></div></div>
+        <div class="field"><label>Plant capacity</label><div class="field-r"><input type="number" id="eg_cap" value="75000" step="1000"><span class="unit">kg/month</span></div></div>
+        <div class="field"><label>Monthly overhead</label><div class="field-r"><input type="number" id="eg_oh" value="500000" step="10000"><span class="unit">₹/month</span></div></div>
+        <div class="field"><label>Delivery freight</label><div class="field-r"><input type="number" id="eg_del" value="2" step="0.5"><span class="unit">₹/kg</span></div></div>
+      </div></div>
+      <div class="sec"><div class="sec-head">D · GTO fractionation</div><div class="igrid">
+        <div class="field"><label>GTO price (ex-works)</label><div class="field-r"><input type="number" id="gto_p" value="140" step="1"><span class="unit">₹/litre</span></div></div>
+        <div class="field"><label>GTO density</label><div class="field-r"><input type="number" id="gto_den" value="0.86" step="0.01"><span class="unit">kg/litre</span></div></div>
+        <div class="field"><label>GTO input volume</label><div class="field-r"><input type="number" id="gto_vol" value="150000" step="5000"><span class="unit">kg</span></div></div>
+        <div class="field"><label>Processing cost</label><div class="field-r"><input type="number" id="gto_proc" value="5300000" step="100000"><span class="unit">₹/batch</span></div></div>
+      </div></div>
+      <div class="sec"><div class="sec-head">D2 · Yields (% of GTO kg input)</div><div class="igrid">
+        <div class="field"><label>Alpha+Beta yield</label><div class="field-r"><input type="number" id="ab_yld" value="0.341" step="0.001"><span class="unit">fraction</span></div></div>
+        <div class="field"><label>Dipentene (DD) yield</label><div class="field-r"><input type="number" id="dd_yld" value="0.6" step="0.01"><span class="unit">fraction</span></div></div>
+        <div class="field"><label>Pine oil 22% yield</label><div class="field-r"><input type="number" id="po22_yld" value="0.05" step="0.005"><span class="unit">fraction</span></div></div>
+        <div class="field"><label>Pine tar yield</label><div class="field-r"><input type="number" id="tar_yld" value="0.0125" step="0.001"><span class="unit">fraction</span></div></div>
+        <div class="field"><label>Longifolene 82% yield</label><div class="field-r"><input type="number" id="long_yld" value="0.0265" step="0.001"><span class="unit">fraction</span></div></div>
+      </div></div>
+      <div class="sec"><div class="sec-head">D3 · Selling prices</div><div class="igrid">
+        <div class="field"><label>Dipentene DD (anchor)</label><div class="field-r"><input type="number" id="dd_pr" value="143" step="1"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Pine oil 22%</label><div class="field-r"><input type="number" id="po22_pr_ltr" value="190" step="1"><span class="unit">₹/litre</span></div></div>
+        <div class="field"><label>Pine tar</label><div class="field-r"><input type="number" id="tar_pr_ltr" value="24" step="1"><span class="unit">₹/litre</span></div></div>
+        <div class="field"><label>Longifolene 82%</label><div class="field-r"><input type="number" id="long_pr_ltr" value="420" step="1"><span class="unit">₹/litre</span></div></div>
+        <div class="field"><label>Alpha+Beta market benchmark</label><div class="field-r"><input type="number" id="ab_mkt_ltr" value="272" step="1"><span class="unit">₹/litre</span></div></div>
+      </div></div>
+      <div class="sec"><div class="sec-head">E · Pine oil processing</div><div class="igrid">
+        <div class="field"><label>Exchange rate (live)</label><div class="field-r"><input type="number" id="fx" value="91" step="0.5"><span class="unit">₹/USD</span></div></div>
+        <div class="field"><label>AB batch size</label><div class="field-r"><input type="number" id="ab_batch" value="20000" step="1000"><span class="unit">kg</span></div></div>
+        <div class="field"><label>Pine oil 22% anchor price</label><div class="field-r"><input type="number" id="po22_anc" value="156" step="1"><span class="unit">₹/kg</span></div></div>
+        <div class="field"><label>Processing cost (Step 4)</label><div class="field-r"><input type="number" id="s4_proc" value="0" step="0"><span class="unit">₹ (0 = absorbed)</span></div></div>
+        <div class="field"><label>Terpineol qty (Sc A)</label><div class="field-r"><input type="number" id="terp_qty" value="12000" step="500"><span class="unit">kg</span></div></div>
+        <div class="field"><label>PO22% qty (Sc A)</label><div class="field-r"><input type="number" id="po22_a" value="8000" step="500"><span class="unit">kg</span></div></div>
+        <div class="field"><label>PO 85% qty (Sc B)</label><div class="field-r"><input type="number" id="po85_qty" value="13200" step="500"><span class="unit">kg</span></div></div>
+        <div class="field"><label>PO22% qty (Sc B)</label><div class="field-r"><input type="number" id="po22_b" value="6800" step="500"><span class="unit">kg</span></div></div>
+        <div class="field"><label>Sea freight / container</label><div class="field-r"><input type="number" id="sea_fr" value="182000" step="1000"><span class="unit">₹</span></div></div>
+        <div class="field"><label>Palletisation</label><div class="field-r"><input type="number" id="pallet" value="35000" step="1000"><span class="unit">₹</span></div></div>
+        <div class="field"><label>CHA charges</label><div class="field-r"><input type="number" id="cha" value="100000" step="1000"><span class="unit">₹</span></div></div>
+        <div class="field"><label>Local freight</label><div class="field-r"><input type="number" id="loc_fr" value="48000" step="1000"><span class="unit">₹</span></div></div>
+        <div class="field"><label>Container size</label><div class="field-r"><input type="number" id="cont_kg" value="24000" step="1000"><span class="unit">kg</span></div></div>
+      </div></div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div id="p-s1" class="panel">
+      <div class="panel-title">Step 1 · Rosin</div>
+      <div class="panel-sub">OPR → Rosin + GTO by-product</div>
+      <div id="s1cards" class="cards"></div>
+      <div class="sec"><div class="sec-head">1 · OPR cost build-up (per kg OPR)</div><table id="t_s1opr"></table></div>
+      <div class="sec"><div class="sec-head">2 · Rosin cost (per kg rosin, after yield conversion)</div><table id="t_s1ros"></table></div>
+      <div class="sec"><div class="sec-head">3 · P&amp;L</div><table id="t_s1pl"></table></div>
+      <div class="sec"><div class="sec-head">4 · Per-truck economics</div><table id="t_s1truck"></table></div>
+      <div class="sec"><div class="sec-head">5 · OPR price sensitivity → rosin margin</div><div class="tscroll"><table id="t_s1sens"></table></div></div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div id="p-s2" class="panel">
+      <div class="panel-title">Step 2 · Ester gum</div>
+      <div class="panel-sub">Rosin + Glycerol → Ester gum + Rosin oil (by-product)</div>
+      <div id="s2cards" class="cards"></div>
+      <div class="sec"><div class="sec-head">1 · Batch composition</div><table id="t_s2batch"></table></div>
+      <div class="sec"><div class="sec-head">2 · Cost build-up (per kg ester gum)</div><table id="t_s2cost"></table></div>
+      <div class="sec"><div class="sec-head">3 · P&amp;L</div><table id="t_s2pl"></table></div>
+      <div class="sec"><div class="sec-head">4 · Own rosin vs market rosin</div><div class="tscroll"><table id="t_s2comp"></table></div></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="p-s3" class="panel">
+      <div class="panel-title">Step 3 · GTO fractionation</div>
+      <div class="panel-sub">Zero-profit model — AB price derived so total revenue = total cost</div>
+      <div id="s3cards" class="cards"></div>
+      <div class="sec"><div class="sec-head">1 · Total conversion cost</div><table id="t_s3cost"></table></div>
+      <div class="sec"><div class="sec-head">2 · Revenue from sold products</div><table id="t_s3rev"></table></div>
+      <div class="sec"><div class="sec-head">3 · Alpha+Beta zero-profit derived price</div><table id="t_s3ab"></table></div>
+      <div class="sec"><div class="sec-head">4 · Zero-profit verification</div><table id="t_s3ver"></table></div>
+      <div class="sec"><div class="sec-head">5 · DD price sensitivity → AB derived cost</div><div class="tscroll"><table id="t_s3sens"></table></div></div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div id="p-s4" class="panel">
+      <div class="panel-title">Step 4 · Pine oil</div>
+      <div class="panel-sub">Alpha+Beta feedstock (zero-profit from Step 3) → Terpineol / Pine Oil 85%</div>
+      <div id="s4cards" class="cards"></div>
+      <div class="sec"><div class="sec-head">1 · Batch input cost</div><table id="t_s4batch"></table></div>
+      <div class="sec"><div class="sec-head">2 · Pine oil 22% anchor</div><table id="t_s4po22"></table></div>
+      <div class="sec"><div class="sec-head">3 · Derived cost per product</div><div class="tscroll"><table id="t_s4cost"></table></div></div>
+      <div class="sec"><div class="sec-head">4 · Export logistics</div><table id="t_s4log"></table></div>
+      <div class="sec"><div class="sec-head">5 · Minimum selling prices</div><div class="tscroll"><table id="t_s4msp"></table></div></div>
+      <div class="sec"><div class="sec-head">6 · Own GTO vs imported GTO cost advantage</div><div class="tscroll"><table id="t_s4gto"></table></div></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const N=id=>parseFloat($(id).value)||0;
+const S=id=>$(id).value;
+const f=(x,d=0)=>x==null?'—':x.toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fc=x=>'₹'+f(Math.round(x));
+const fp=x=>(x*100).toFixed(1)+'%';
+
+function go(name,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  $('p-'+name).classList.add('active');
+  el.classList.add('active');
+  calc();
+}
+
+function mkT(id,ths,rows){
+  const t=$(id);if(!t)return;
+  const h=ths.map((h,i)=>`<th class="${i>0?'n':''}">${h}</th>`).join('');
+  const b=rows.map(r=>`<tr class="${r.c||''}">${r.d.map((v,i)=>`<td class="${i>0?'n':''}">${v??'—'}</td>`).join('')}</tr>`).join('');
+  t.innerHTML=`<thead><tr>${h}</tr></thead><tbody>${b}</tbody>`;
+}
+
+function mkC(id,cards){
+  $(id).innerHTML=cards.map(c=>`<div class="card ${c.c||''}"><div class="lbl">${c.l}</div><div class="val">${c.v}</div>${c.s?`<div class="sub">${c.s}</div>`:''}</div>`).join('');
+}
+
+function calc(){
+  // Step 1
+  const oprP=N('opr_p'),tax=oprP*0.05,lab=N('opr_lab'),frIn=N('opr_fr');
+  const rYld=N('r_yld'),gYld=N('g_yld'),gtoSP=N('gto_sp');
+  const gtoCred=gYld*gtoSP;
+  const oprLand=oprP+tax+lab+frIn;
+  const oprNet=oprLand-gtoCred;
+  const rosinGross=rYld>0?oprLand/rYld:0;
+  const gtoCrPerR=rYld>0?gtoCred/rYld:0;
+  const netRosin=rosinGross-gtoCrPerR;
+  const totalRosin=netRosin+N('ros_pack')+N('ros_trans');
+  const rosSell=N('ros_sell'),rosMgn=rosSell-totalRosin;
+  const trk=N('truck'),trkPft=rosMgn*trk;
+
+  mkC('s1cards',[
+    {l:'OPR landed cost',v:'₹'+f(oprLand,2),s:'per kg OPR'},
+    {l:'Net OPR (ex-GTO)',v:'₹'+f(oprNet,2),s:'per kg OPR'},
+    {l:'Total rosin cost',v:'₹'+f(totalRosin,3),s:'per kg rosin'},
+    {l:'Rosin selling price',v:'₹'+f(rosSell,2)},
+    {l:'Margin / kg',v:'₹'+f(rosMgn,3),c:rosMgn>=0?'p':'l'},
+    {l:'Profit / truck',v:fc(trkPft),c:trkPft>=0?'p':'l',s:f(trk,0)+'kg truck'},
+  ]);
+  mkT('t_s1opr',['Cost line','₹/kg OPR'],[
+    {d:['OPR purchase price',f(oprP,2)]},
+    {d:['(+) Tax / duties (5%)',f(tax,3)]},
+    {d:['(+) Labour',f(lab,2)]},
+    {d:['(+) Inward freight',f(frIn,2)]},
+    {d:['Total OPR landed cost',f(oprLand,3)],c:'tot'},
+    {d:['(−) GTO credit (yield × price)','−'+f(gtoCred,3)]},
+    {d:['Net OPR cost (ex-GTO)',f(oprNet,3)],c:'tot'},
+  ]);
+  mkT('t_s1ros',['Cost line','₹/kg rosin'],[
+    {d:['Rosin yield (% of OPR)',fp(rYld)]},
+    {d:['Gross rosin cost (before GTO credit)',f(rosinGross,3)]},
+    {d:['(−) GTO credit per kg rosin','−'+f(gtoCrPerR,3)]},
+    {d:['Net rosin cost',f(netRosin,3)],c:'tot'},
+    {d:['(+) Packing charges',f(N('ros_pack'),2)]},
+    {d:['(+) Transportation',f(N('ros_trans'),2)]},
+    {d:['Total delivered cost / kg',f(totalRosin,3)],c:'tot'},
+  ]);
+  mkT('t_s1pl',['Line','Value','Unit'],[
+    {d:['Rosin selling price',f(rosSell,2),'₹/kg']},
+    {d:['(−) Total delivered cost','−'+f(totalRosin,3),'₹/kg']},
+    {d:['Gross margin / kg',f(rosMgn,3),'₹/kg'],c:rosMgn>=0?'pr':'ls'},
+    {d:['Margin % on selling price',fp(rosSell>0?rosMgn/rosSell:0),'']},
+    {d:['Margin % on net OPR cost',fp(oprNet>0?rosMgn/oprNet:0),'']},
+  ]);
+  mkT('t_s1truck',['Line','Value','Unit'],[
+    {d:['Truck load',f(trk,0),'kg']},
+    {d:['Revenue / truck',fc(rosSell*trk),'₹']},
+    {d:['Cost / truck',fc(totalRosin*trk),'₹']},
+    {d:['Gross profit / truck',fc(trkPft),'₹'],c:trkPft>=0?'pr':'ls'},
+    {d:['Profit per kg',f(rosMgn,3),'₹/kg'],c:rosMgn>=0?'pr':'ls'},
+  ]);
+  const sp=[78,82,86,90,94,98,102,106,110,114];
+  $('t_s1sens').innerHTML=`<thead><tr><th>OPR ₹/kg</th><th class="n">GTO ₹/kg</th><th class="n">Del. cost ₹/kg</th><th class="n">Margin ₹/kg</th><th class="n">Truck profit ₹</th></tr></thead><tbody>`+
+    sp.map(p=>{const c=(p+tax+lab+frIn-gtoCred)/rYld+N('ros_pack')+N('ros_trans'),m=rosSell-c,a=Math.abs(p-oprP)<2;
+      return`<tr class="${a?'hi':''}"><td>${p}</td><td class="n">${f(gtoSP,0)}</td><td class="n">${f(c,2)}</td><td class="n">${f(m,2)}</td><td class="n">${fc(m*trk)}</td></tr>`}).join('')+'</tbody>';
+
+  // Step 2
+  const rosBatch=150000,gRatio=N('gly_ratio'),gCost=N('gly_cost');
+  const rosCostPKg=S('ros_src')==='OWN'?totalRosin:N('ros_mkt');
+  const gIn=rosBatch*gRatio,tBatch=rosBatch+gIn,egOut=tBatch*N('eg_yld');
+  const waterRel=gIn*(54/92),roilOut=tBatch-egOut-waterRel;
+  const gCostPerR=gRatio*gCost,ohPerEg=N('eg_cap')>0?N('eg_oh')/N('eg_cap'):0;
+  const rosCostEg=egOut>0?rosCostPKg*(rosBatch/egOut):0;
+  const gCostEg=egOut>0?gCostPerR*(rosBatch/egOut):0;
+  const roilCred=egOut>0?-(roilOut*N('roil_sp'))/egOut:0;
+  const totalEgCost=rosCostEg+gCostEg+roilCred+ohPerEg;
+  const totalEgDel=totalEgCost+N('eg_del');
+  const egSellP=N('eg_sell'),egMgn=egSellP-totalEgDel;
+  const batchGP=egMgn*egOut,monthlyGP=egMgn*N('eg_cap');
+
+  mkC('s2cards',[
+    {l:'Ester gum output',v:f(egOut,0)+' kg',s:'per 150T rosin batch'},
+    {l:'Total cost / kg EG',v:'₹'+f(totalEgDel,2)},
+    {l:'EG selling price',v:'₹'+f(egSellP,2)},
+    {l:'Margin / kg EG',v:'₹'+f(egMgn,2),c:egMgn>=0?'p':'l'},
+    {l:'Batch gross profit',v:fc(batchGP),c:batchGP>=0?'p':'l'},
+    {l:'Monthly profit',v:fc(monthlyGP),c:monthlyGP>=0?'p':'l',s:'at capacity'},
+  ]);
+  mkT('t_s2batch',['Parameter','Value','Unit'],[
+    {d:['Rosin input',f(rosBatch,0),'kg']},
+    {d:['Glycerol input ('+fp(gRatio)+')',f(gIn,0),'kg']},
+    {d:['Total batch input',f(tBatch,0),'kg'],c:'tot'},
+    {d:['Ester gum output',f(egOut,0),'kg']},
+    {d:['Rosin oil (by-product)',f(roilOut,1),'kg']},
+    {d:['Water released',f(waterRel,1),'kg']},
+  ]);
+  mkT('t_s2cost',['Cost line','₹/kg EG'],[
+    {d:['Rosin cost / kg EG ('+S('ros_src')+')',f(rosCostEg,3)]},
+    {d:['Glycerol cost / kg EG',f(gCostEg,3)]},
+    {d:['(−) Rosin oil credit','−'+f(Math.abs(roilCred),3)]},
+    {d:['Overhead / kg EG',f(ohPerEg,3)]},
+    {d:['Total cost / kg EG',f(totalEgCost,3)],c:'tot'},
+    {d:['(+) Freight / delivery',f(N('eg_del'),2)]},
+    {d:['Total delivered / kg EG',f(totalEgDel,3)],c:'tot'},
+  ]);
+  mkT('t_s2pl',['Line','Value','Unit'],[
+    {d:['EG selling price',f(egSellP,2),'₹/kg']},
+    {d:['(−) Total delivered cost','−'+f(totalEgDel,3),'₹/kg']},
+    {d:['Gross margin / kg',f(egMgn,3),'₹/kg'],c:egMgn>=0?'pr':'ls'},
+    {d:['Gross margin %',fp(egSellP>0?egMgn/egSellP:0),'']},
+    {d:['Batch gross profit',fc(batchGP),'₹'],c:batchGP>=0?'pr':'ls'},
+    {d:['Monthly profit (at capacity)',fc(monthlyGP),'₹'],c:monthlyGP>=0?'pr':'ls'},
+  ]);
+  const mktR=N('ros_mkt');
+  const mktEgCost=egOut>0?mktR*(rosBatch/egOut):0;
+  const mktGCost=egOut>0?gCostPerR*(rosBatch/egOut):0;
+  const mktDel=mktEgCost+mktGCost+roilCred+ohPerEg+N('eg_del');
+  mkT('t_s2comp',['Metric','Own rosin (Step 1)','Market rosin (₹'+f(mktR,0)+'/kg)','Difference'],[
+    {d:['Rosin cost / kg',f(rosCostPKg,2),f(mktR,2),f(rosCostPKg-mktR,2)]},
+    {d:['Glycerol cost / kg rosin',f(gCostPerR,2),f(gCostPerR,2),'0']},
+    {d:['EG cost / kg (excl overhead)',f(rosCostEg+gCostEg,3),f(mktEgCost+mktGCost,3),f(rosCostEg+gCostEg-mktEgCost-mktGCost,3)],c:'tot'},
+    {d:['Overhead / kg EG',f(ohPerEg,3),f(ohPerEg,3),'0']},
+    {d:['Total delivered / kg EG',f(totalEgDel,3),f(mktDel,3),f(totalEgDel-mktDel,3)],c:'tot'},
+    {d:['Margin / kg EG',f(egMgn,3),f(egSellP-mktDel,3),f(egMgn-(egSellP-mktDel),3)]},
+  ]);
+
+  // Step 3
+  const den=N('gto_den'),gtoP=N('gto_p'),gtoVol=N('gto_vol');
+  const gtoCostKg=den>0?gtoP/den:0;
+  const gtoInputCost=gtoVol*gtoCostKg,gtoProc=N('gto_proc'),gtoTotal=gtoInputCost+gtoProc;
+  const abKg=gtoVol*N('ab_yld'),ddKg=gtoVol*N('dd_yld');
+  const po22Kg=gtoVol*N('po22_yld'),tarKg=gtoVol*N('tar_yld'),longKg=gtoVol*N('long_yld');
+  const ddPr=N('dd_pr');
+  const po22PrKg=den>0?N('po22_pr_ltr')/den:0;
+  const tarPrKg=den>0?N('tar_pr_ltr')/den:0;
+  const longPrKg=den>0?N('long_pr_ltr')/den:0;
+  const abMktKg=den>0?N('ab_mkt_ltr')/den:0;
+  const ddRev=ddKg*ddPr,po22Rev=po22Kg*po22PrKg,tarRev=tarKg*tarPrKg,longRev=longKg*longPrKg;
+  const soldRev=ddRev+po22Rev+tarRev+longRev;
+  const abNeeded=gtoTotal-soldRev;
+  const abDerived=abKg>0?abNeeded/abKg:0;
+  const abDerivedLtr=abDerived*den;
+  const abSaving=abMktKg-abDerived;
+  const totRev=soldRev+abKg*abDerived;
+  const profit=totRev-gtoTotal;
+
+  mkC('s3cards',[
+    {l:'Total fractionation cost',v:fc(gtoTotal)},
+    {l:'GTO cost / kg',v:'₹'+f(gtoCostKg,2),s:'₹'+f(gtoP,0)+'/L ÷ '+f(den,2)+' density'},
+    {l:'AB derived price',v:'₹'+f(abDerived,2)+'/kg',c:'i',s:'₹'+f(abDerivedLtr,2)+'/L → Step 4'},
+    {l:'AB market price',v:'₹'+f(abMktKg,2)+'/kg',s:'₹'+f(N('ab_mkt_ltr'),0)+'/L benchmark'},
+    {l:'Saving vs market',v:'₹'+f(abSaving,2)+'/kg',c:abSaving>=0?'p':'l'},
+    {l:'Verification profit',v:fc(profit),c:Math.abs(profit)<1?'p':'l',s:'target: ₹0'},
+  ]);
+  mkT('t_s3cost',['Cost line','Value','Unit'],[
+    {d:['GTO price (ex-works)',f(gtoP,2),'₹/litre']},
+    {d:['GTO density',f(den,2),'kg/litre']},
+    {d:['GTO cost / kg (auto)',f(gtoCostKg,4),'₹/kg']},
+    {d:['GTO input volume',f(gtoVol,0),'kg']},
+    {d:['GTO input cost',fc(gtoInputCost),'₹']},
+    {d:['(+) Processing cost',fc(gtoProc),'₹']},
+    {d:['Total cost',fc(gtoTotal),'₹'],c:'tot'},
+  ]);
+  mkT('t_s3rev',['Product','Volume (kg)','₹/kg','Revenue (₹)','Note'],[
+    {d:['Dipentene (DD) ← anchor',f(ddKg,0),f(ddPr,2),fc(ddRev),'fixed ₹'+ddPr+'/kg']},
+    {d:['Pine oil 22%',f(po22Kg,0),f(po22PrKg,4),fc(po22Rev),'₹'+f(N('po22_pr_ltr'),0)+'/L']},
+    {d:['Pine tar',f(tarKg,0),f(tarPrKg,4),fc(tarRev),'₹'+f(N('tar_pr_ltr'),0)+'/L']},
+    {d:['Longifolene 82%',f(longKg,0),f(longPrKg,4),fc(longRev),'₹'+f(N('long_pr_ltr'),0)+'/L']},
+    {d:['Total sold (excl AB)',f(ddKg+po22Kg+tarKg+longKg,0),'',fc(soldRev),''],c:'tot'},
+  ]);
+  mkT('t_s3ab',['Line','Formula','Value','Unit'],[
+    {d:['Total cost',fc(gtoTotal),fc(gtoTotal),'₹']},
+    {d:['(−) DD revenue','Vol × ₹'+ddPr,'−'+fc(ddRev),'₹']},
+    {d:['(−) Pine oil 22% revenue','Vol × price','−'+fc(po22Rev),'₹']},
+    {d:['(−) Pine tar revenue','Vol × price','−'+fc(tarRev),'₹']},
+    {d:['(−) Longifolene revenue','Vol × price','−'+fc(longRev),'₹']},
+    {d:['Revenue AB must earn','Cost − sold',fc(abNeeded),'₹'],c:'tot'},
+    {d:['÷ Alpha+Beta volume (kg)','yield × GTO vol',f(abKg,0),'kg']},
+    {d:['Derived price / kg','Residual ÷ volume',f(abDerived,3),'₹/kg'],c:'tot'},
+    {d:['Same in ₹/litre','× density '+f(den,2),f(abDerivedLtr,3),'₹/litre']},
+    {d:['AB market price (benchmark)','₹'+f(N('ab_mkt_ltr'),0)+'/L ÷ density',f(abMktKg,3),'₹/kg']},
+    {d:['Saving vs buying at market','Market − derived',f(abSaving,3),'₹/kg'],c:abSaving>=0?'pr':'ls'},
+  ]);
+  mkT('t_s3ver',['Revenue line','Volume (kg)','₹/kg','Revenue (₹)','Check'],[
+    {d:['Alpha+Beta (at derived price)',f(abKg,0),f(abDerived,3),fc(abKg*abDerived),'internal']},
+    {d:['Dipentene (DD)',f(ddKg,0),f(ddPr,2),fc(ddRev),'sold']},
+    {d:['Pine oil 22%',f(po22Kg,0),f(po22PrKg,4),fc(po22Rev),'sold']},
+    {d:['Pine tar',f(tarKg,0),f(tarPrKg,4),fc(tarRev),'sold']},
+    {d:['Longifolene 82%',f(longKg,0),f(longPrKg,4),fc(longRev),'sold']},
+    {d:['Total revenue','','',fc(totRev),'must = total cost'],c:'tot'},
+    {d:['Total cost','','',fc(gtoTotal),'from section 1']},
+    {d:['Profit / (loss)','','',fc(profit),Math.abs(profit)<1?'✓ zero':'⚠ check'],c:Math.abs(profit)<1?'pr':'ls'},
+  ]);
+  const ddSens=[120,130,135,140,143,148,153,158,165,175,185];
+  $('t_s3sens').innerHTML=`<thead><tr><th>DD ₹/kg</th><th class="n">DD revenue</th><th class="n">Total sold rev</th><th class="n">AB derived ₹/kg</th><th class="n">AB in ₹/litre</th></tr></thead><tbody>`+
+    ddSens.map(p=>{
+      const sold2=p*ddKg+po22Rev+tarRev+longRev;
+      const abd=abKg>0?(gtoTotal-sold2)/abKg:0;
+      return`<tr class="${p===ddPr?'hi':''}"><td>${p}</td><td class="n">${fc(p*ddKg)}</td><td class="n">${fc(sold2)}</td><td class="n">${f(abd,2)}</td><td class="n">${f(abd*den,2)}</td></tr>`;
+    }).join('')+'</tbody>';
+
+  // Step 4
+  const fxR=N('fx'),abBatch=N('ab_batch'),abCostKg=abDerived;
+  const totalBC=abCostKg*abBatch+N('s4_proc');
+  const po22Anc=N('po22_anc');
+  const po22QA=N('po22_a'),po22QB=N('po22_b'),terpQty=N('terp_qty'),po85Qty=N('po85_qty');
+  const po22RevA=po22QA*po22Anc,po22RevB=po22QB*po22Anc;
+  const netA=terpQty>0?(totalBC-po22RevA)/terpQty:0;
+  const netB=po85Qty>0?(totalBC-po22RevB)/po85Qty:0;
+  const contKg=N('cont_kg'),logTotal=N('sea_fr')+N('pallet')+N('cha')+N('loc_fr');
+  const logPKg=contKg>0?logTotal/contKg:0,logPKgUSD=fxR>0?logPKg/fxR:0;
+  const mspA=netA+logPKg,mspB=netB+logPKg,mspPo22=po22Anc+logPKg;
+  const impGtoKg=2900*fxR/1000;
+
+  mkC('s4cards',[
+    {l:'AB feedstock / kg',v:'₹'+f(abCostKg,2),c:'i',s:'zero-profit from Step 3'},
+    {l:'Total batch cost',v:fc(totalBC),s:f(abBatch,0)+'kg batch'},
+    {l:'Terpineol cost / kg',v:'₹'+f(netA,2)},
+    {l:'PO 85% cost / kg',v:'₹'+f(netB,2)},
+    {l:'Logistics / kg',v:'₹'+f(logPKg,2),s:'$'+f(logPKgUSD,3)+'/kg'},
+    {l:'Min sell — Terpineol',v:'₹'+f(mspA,0)+'/kg',s:'$'+f(fxR>0?mspA/fxR:0,3)+'/kg'},
+  ]);
+  mkT('t_s4batch',['Line','₹ value','USD value'],[
+    {d:['Alpha+Beta price / kg (from Step 3 zero-profit)',f(abCostKg,3),fxR>0?f(abCostKg/fxR,4):'—']},
+    {d:['× Batch size',f(abBatch,0),'—']},
+    {d:['Total input cost',fc(abCostKg*abBatch),fxR>0?f(abCostKg*abBatch/fxR,0):'—'],c:'tot'},
+    {d:['Processing cost',fc(N('s4_proc')),fxR>0?f(N('s4_proc')/fxR,0):'—']},
+    {d:['Total batch cost',fc(totalBC),fxR>0?f(totalBC/fxR,0):'—'],c:'tot'},
+  ]);
+  mkT('t_s4po22',['Parameter','Scenario A (Terpineol)','Scenario B (PO 85%)','Unit'],[
+    {d:['Pine oil 22% price (anchor)',f(po22Anc,2),f(po22Anc,2),'₹/kg']},
+    {d:['Pine oil 22% quantity',f(po22QA,0),f(po22QB,0),'kg']},
+    {d:['Pine oil 22% revenue',fc(po22RevA),fc(po22RevB),'₹'],c:'tot'},
+    {d:['PO22% in USD',fxR>0?f(po22Anc/fxR,4):'—',fxR>0?f(po22Anc/fxR,4):'—','$/kg']},
+  ]);
+  mkT('t_s4cost',['Line','Sc A — Terpineol','Sc B — Pine Oil 85%','Unit'],[
+    {d:['Total batch cost',fc(totalBC),fc(totalBC),'₹']},
+    {d:['(−) Pine oil 22% revenue','−'+fc(po22RevA),'−'+fc(po22RevB),'₹']},
+    {d:['Net cost for main product',fc(totalBC-po22RevA),fc(totalBC-po22RevB),'₹'],c:'tot'},
+    {d:['Main product quantity',f(terpQty,0),f(po85Qty,0),'kg']},
+    {d:['Cost / kg (main product)',f(netA,3),f(netB,3),'₹/kg'],c:'tot'},
+    {d:['Cost / kg in USD',fxR>0?f(netA/fxR,4):'—',fxR>0?f(netB/fxR,4):'—','$/kg']},
+  ]);
+  mkT('t_s4log',['Cost item','₹ per container','₹ per kg','$ per kg'],[
+    {d:['Sea freight',fc(N('sea_fr')),f(N('sea_fr')/contKg,4),fxR>0?f(N('sea_fr')/contKg/fxR,5):'—']},
+    {d:['Palletisation',fc(N('pallet')),f(N('pallet')/contKg,4),fxR>0?f(N('pallet')/contKg/fxR,5):'—']},
+    {d:['CHA charges',fc(N('cha')),f(N('cha')/contKg,4),fxR>0?f(N('cha')/contKg/fxR,5):'—']},
+    {d:['Local freight',fc(N('loc_fr')),f(N('loc_fr')/contKg,4),fxR>0?f(N('loc_fr')/contKg/fxR,5):'—']},
+    {d:['Total logistics',fc(logTotal),f(logPKg,4),fxR>0?f(logPKgUSD,5):'—'],c:'tot'},
+  ]);
+  mkT('t_s4msp',['Product','Cost / kg (₹)','+ Logistics (₹)','Min sell ₹/kg','Min sell $/kg'],[
+    {d:['Terpineol (Scenario A)',f(netA,2),f(logPKg,2),f(mspA,2),fxR>0?f(mspA/fxR,4):'—'],c:'tot'},
+    {d:['Pine oil 85% (Scenario B)',f(netB,2),f(logPKg,2),f(mspB,2),fxR>0?f(mspB/fxR,4):'—'],c:'tot'},
+    {d:['Pine oil 22% (both)',f(po22Anc,2),f(logPKg,2),f(mspPo22,2),fxR>0?f(mspPo22/fxR,4):'—']},
+  ]);
+  const impTerpKg=terpQty>0?(impGtoKg*abBatch-po22QA*po22Anc)/terpQty:0;
+  const impPo85Kg=po85Qty>0?(impGtoKg*abBatch-po22QB*po22Anc)/po85Qty:0;
+  mkT('t_s4gto',['Metric','Own GTO (Step 3)','Imported GTO ($2,900/T)','Saving (own vs import)','Note'],[
+    {d:['GTO cost / kg',f(abCostKg,2),f(impGtoKg,2),f(impGtoKg-abCostKg,2),'₹/kg']},
+    {d:['GTO cost in USD / kg',fxR>0?f(abCostKg/fxR,4):'—','2.900',fxR>0?f((impGtoKg-abCostKg)/fxR,4):'—','$/kg']},
+    {d:['Terpineol cost / kg',f(netA,2),f(impTerpKg,2),f(impTerpKg-netA,2),'Sc A']},
+    {d:['Pine oil 85% cost / kg',f(netB,2),f(impPo85Kg,2),f(impPo85Kg-netB,2),'Sc B']},
+    {d:['Terpineol min sell price',f(mspA,2),f(impTerpKg+logPKg,2),f(impTerpKg+logPKg-mspA,2),'₹/kg']},
+  ]);
+}
+
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',calc));
+calc();
+
+async function fetchFX(){
+  try{
+    const j=await(await fetch('https://open.er-api.com/v6/latest/USD')).json();
+    const r=j.rates&&j.rates.INR;
+    if(r){$('fx').value=r.toFixed(2);$('fx_disp').textContent=r.toFixed(2);calc();}
+  }catch(e){}
+}
+fetchFX();
+</script>
+</body>
+</html>
