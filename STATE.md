@@ -6,18 +6,19 @@ Agent spend cap: not set → FLAG.
 ## Today's 3 tasks
 | # | Task | Owner | Status | Done-check |
 |---|---|---|---|---|
-| 1 | Sales tracker: Dec–Mar vs ₹25 Cr each; booked / pipeline / gap vs ₹100 Cr; Nov run-rate baseline from Monthy Scheduling + Gmail POs → data/tracker.csv | analyst → reviewer | rework (review 1: 7 FAIL) | checks/tracker.py |
+| 1 | Sales tracker: Dec–Mar vs ₹25 Cr each; booked / pipeline / gap vs ₹100 Cr; Nov run-rate baseline from Monthy Scheduling + Gmail POs → data/tracker.csv | analyst → reviewer | blocked ×2 → Sumit (SIDCO price) | checks/tracker.py |
 | 2 | GTO landed cost Indonesia / Brazil / domestic per kg → analysis/gto_landed/; analysis/costing.py reproduces index.html defaults | analyst → reviewer | todo | checks/gto.py |
 | 3 | Account plans for expansion capacity (ester gum, maleic, CARPAL): volume add per month Dec–Mar, one file per account → accounts/<name>/plan.md | sales → reviewer | todo | checks/accounts.py |
 
 ## Awaiting Sumit
+- Task 1 blocked twice: confirm SIDCO 1327 (PO PO2221047, ~47.4 t Terpene oil 85%) is USD 7,500/MT EXW Mumbai, Dec dispatch. Row = ₹3.23 Cr of ₹3.45 Cr booked.
 - FX standard for USD orders: ₹93 (index.html line 400) vs ₹91 used. Δ on current USD rows ₹14.58 L.
 
 ## For Sidharth
 - (none)
 
 ## Blocked (count)
-- (none)
+- Task 1 sales tracker: 2 (review 1: uncited prices; review 2: SIDCO currency unstated in source)
 
 ## Flags
 - GitHub still reports repo as public (18 Nov, after Sumit set private) — re-verify; business data stays gitignored regardless.
