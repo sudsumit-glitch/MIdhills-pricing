@@ -69,4 +69,5 @@ Routine work on haiku/sonnet; pricing, margins and strategy on opus.
 9. Production/finance decisions → "For Sidharth" list, not decided.
 
 ## Done
-`bash checks/run.sh` → GREEN. The Stop hook enforces this (hooks: step 3, pending).
+`bash checks/run.sh` → GREEN. Stop hook enforces it; PreToolUse gate: .claude/hooks/guard.py.
+Repo is PUBLIC: data/, accounts/, drafts/, reviews/, briefs/, budget/ are gitignored — never commit them.

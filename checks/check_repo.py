@@ -40,8 +40,16 @@ else:
         cells = [c.strip() for c in r.strip("|").split("|")]
         if len(cells) != 5 or not cells[2] or not cells[4].startswith("checks/"):
             errors.append(f"task row needs owner and a checks/ done-check: {r}")
-        elif cells[3] == "done" and not (root / cells[4]).exists():
-            errors.append(f"task {cells[0]} marked done but {cells[4]} does not exist")
+        elif cells[3] == "done":
+            chk = root / cells[4]
+            if not chk.exists():
+                errors.append(f"task {cells[0]} marked done but {cells[4]} does not exist")
+            else:
+                import subprocess
+                p = subprocess.run([sys.executable, "-I", str(chk)], capture_output=True, text=True)
+                if p.returncode != 0:
+                    errors.append(f"task {cells[0]} marked done but {cells[4]} fails:\n"
+                                  + p.stdout + p.stderr)
 
 if errors:
     print("\n".join(errors))

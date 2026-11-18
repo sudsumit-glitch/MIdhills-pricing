@@ -1,0 +1,9 @@
+# Business data never goes into git while this repo is public.
+# Customer names, prices, volumes, drafts and reviews stay local or in company Drive.
+data/
+accounts/
+drafts/
+reviews/
+briefs/
+budget/
+analysis/**/*.csv
